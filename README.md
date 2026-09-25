@@ -56,6 +56,16 @@ L'offre Business de Hostinger héberge les apps Node.js avec déploiement depuis
    - `DATA_DIR` = `/home/{utilisateur}/private/skiservice-data` (recommandé)
 5. Redéployer. C'est en ligne.
 
+### Synchronisation automatique GitHub → Hostinger
+
+Une fois le dépôt connecté, chaque `git push` sur la branche liée (`main`) redéploie le site automatiquement — aucun passage par le gestionnaire de fichiers :
+
+- Hostinger s'intègre via une **GitHub App** (OAuth) : pendant l'installation, autorisez l'accès au dépôt `SeuKwa/SkiService` (modifiable ensuite dans GitHub → Settings → Applications).
+- À chaque push, GitHub notifie Hostinger via webhook, qui tire les nouveaux fichiers, relance `npm start` et redémarre l'app.
+- L'état de la connexion et l'historique des déploiements sont visibles dans hPanel → **Node.js** (onglet Deployments) ; les logs de build y sont conservés.
+- Si l'accès GitHub est perdu (« Repository access missing »), cliquez **Manage access** dans hPanel ou réinstallez la GitHub App.
+- Si les fichiers ne semblent pas à jour après un déploiement, vérifiez le log du déploiement puis videz le cache du site.
+
 **Pourquoi `DATA_DIR` ?** Hostinger écrase les fichiers applicatifs à chaque déploiement (`hbuilds/`). Sans cette variable, chaque redéploiement remettrait le contenu du back-office à zéro. En pointant `DATA_DIR` vers un dossier hors des fichiers de déploiement (le dossier `private/` n'est pas accessible depuis le web et survit aux redéploiements), vos modifications faites dans /admin sont conservées. Au premier démarrage, le serveur copie `data/content.json` du dépôt vers ce dossier si absent.
 
 ## Déploiement VPS / autre

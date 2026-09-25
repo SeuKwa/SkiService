@@ -14,10 +14,26 @@ const crypto = require("crypto");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const DATA_FILE = path.join(__dirname, "data", "content.json");
-const DATA_BACKUP = path.join(__dirname, "data", "content.backup.json");
+
+/* Contenu éditable : par défaut dans data/ du projet, mais on peut pointer
+   DATA_DIR vers un dossier persistant (hors hbuilds/) pour les hébergeurs
+   qui écrasent les fichiers à chaque déploiement (ex. Hostinger). */
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(__dirname, "data");
+const DATA_FILE = path.join(DATA_DIR, "content.json");
+const DATA_BACKUP = path.join(DATA_DIR, "content.backup.json");
+const SEED_FILE = path.join(__dirname, "data", "content.json");
+
 const VIEWS = path.join(__dirname, "views");
 const PUBLIC_DIR = __dirname;
+
+function ensureDataDir() {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(DATA_FILE) && fs.existsSync(SEED_FILE)) {
+    fs.copyFileSync(SEED_FILE, DATA_FILE);
+  }
+}
 
 /* ───────────────────────── Sessions & sécurité ───────────────────────── */
 
@@ -205,10 +221,12 @@ function serveFile(res, root, rel) {
 /* ───────────────────────── Contenu ───────────────────────── */
 
 async function readContent() {
+  ensureDataDir();
   return JSON.parse(await fsp.readFile(DATA_FILE, "utf8"));
 }
 
 async function saveContent(content) {
+  ensureDataDir();
   const json = JSON.stringify(content, null, 2) + "\n";
   try { await fsp.copyFile(DATA_FILE, DATA_BACKUP); } catch {}
   const tmp = DATA_FILE + ".tmp";

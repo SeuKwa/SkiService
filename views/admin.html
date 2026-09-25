@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Administration — Ski Service Chartreuse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0b1d2a;
+      --paper: #f6f8f9;
+      --glacier: #eef4f6;
+      --line: rgba(11, 29, 42, 0.1);
+      --coral: #ff5a3c;
+      --coral-2: #e8452a;
+      --muted: #5e7889;
+      --ok: #106b4e;
+      --ok-bg: #e3f4ec;
+      --err: #b3261e;
+      --err-bg: #fbe9e7;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 15.5px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      width: min(920px, 100% - 2.4rem);
+      margin-inline: auto;
+      padding: 3rem 0 5rem;
+    }
+
+    h1, h2 { font-family: "Space Grotesk", sans-serif; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
+    h1 { font-size: 1.9rem; }
+    h2 {
+      font-size: 1.2rem;
+      margin-top: 2.6rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--coral-2);
+      margin: 0 0 0.4rem;
+    }
+
+    /* Écran de connexion */
+    .gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(52% 60% at 8% 8%, rgba(255, 90, 60, 0.14) 0%, transparent 62%),
+        radial-gradient(50% 55% at 92% 90%, rgba(17, 145, 190, 0.14) 0%, transparent 65%),
+        var(--paper);
+      padding: 1.5rem;
+    }
+    .gate-card {
+      width: min(400px, 100%);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 2.2rem;
+      box-shadow: 0 22px 48px -20px rgba(11, 29, 42, 0.25);
+    }
+    .gate-card h1 { font-size: 1.45rem; }
+    .gate-card p { color: var(--muted); margin: 0 0 1.4rem; font-size: 0.92rem; }
+
+    /* Formulaires */
+    label { display: block; font-weight: 600; font-size: 0.88rem; margin: 1rem 0 0.35rem; }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px rgba(255, 90, 60, 0.15);
+    }
+    textarea { min-height: 72px; resize: vertical; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.2rem; }
+    @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.4rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      line-height: 1;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .btn-primary {
+      background: var(--coral);
+      color: #fff;
+      box-shadow: 0 12px 24px -12px rgba(255, 90, 60, 0.55);
+    }
+    .btn-primary:hover { background: var(--coral-2); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: wait; transform: none; }
+    .btn-quiet {
+      background: none;
+      border-color: var(--line);
+      color: var(--ink);
+    }
+    .btn-quiet:hover { border-color: var(--ink); }
+
+    .msg {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .msg.ok { display: block; background: var(--ok-bg); color: var(--ok); }
+    .msg.err { display: block; background: var(--err-bg); color: var(--err); }
+
+    /* Barre d'actions */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .topbar .spacer { flex: 1; }
+    .topbar-note { font-size: 0.83rem; color: var(--muted); }
+
+    /* Éléments répétés (services / magasins / stats) */
+    .repeater { display: grid; gap: 1rem; margin-top: 1rem; }
+    .rep-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.1rem 1.3rem;
+      position: relative;
+    }
+    .rep-head {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.2rem;
+    }
+    .rep-num {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: var(--coral-2);
+    }
+    .rep-title { font-weight: 700; flex: 1; }
+    .rep-del {
+      background: none;
+      border: 0;
+      color: #b3261e;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+    }
+    .rep-del:hover { background: var(--err-bg); }
+
+    .add-link {
+      margin-top: 0.8rem;
+      background: none;
+      border: 1.5px dashed var(--line);
+      border-radius: 12px;
+      width: 100%;
+      padding: 0.6rem;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .add-link:hover { border-color: var(--coral); color: var(--coral-2); }
+
+    .items-editor textarea { min-height: 88px; }
+
+    .hint { font-size: 0.8rem; color: var(--muted); margin: 0.25rem 0 0; }
+
+    .savebar {
+      position: sticky;
+      bottom: 1rem;
+      margin-top: 2.4rem;
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      background: var(--ink);
+      border-radius: 16px;
+      padding: 0.9rem 1.2rem;
+      box-shadow: 0 18px 40px -16px rgba(11, 29, 42, 0.45);
+    }
+    .savebar .msg { margin: 0; flex: 1; }
+    .savebar .msg.ok, .savebar .msg.err { background: transparent; padding: 0; }
+    .savebar .msg.ok { color: #7be3b0; }
+    .savebar .msg.err { color: #ff9d90; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Écran de connexion -->
+  <div class="gate" id="gate">
+    <form class="gate-card" id="loginForm">
+      <p class="eyebrow">Ski Service Chartreuse</p>
+      <h1>Administration</h1>
+      <p>Entrez le mot de passe pour modifier le contenu du site.</p>
+      <label for="password">Mot de passe</label>
+      <input type="password" id="password" autocomplete="current-password" required autofocus />
+      <p class="msg err" id="loginMsg" role="alert"></p>
+      <button class="btn btn-primary" type="submit" id="loginBtn" style="margin-top:1.2rem; width:100%">Se connecter</button>
+    </form>
+  </div>
+
+  <!-- Interface d'édition -->
+  <div class="wrap hidden" id="admin">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Administration</p>
+        <h1 style="margin:0">Contenu du site</h1>
+      </div>
+      <div class="spacer"></div>
+      <span class="topbar-note">Les modifications sont visibles immédiatement après enregistrement.</span>
+      <a class="btn btn-quiet" href="/" target="_blank" rel="noopener">Voir le site ↗</a>
+      <button class="btn btn-quiet" id="logoutBtn" type="button">Déconnexion</button>
+    </div>
+
+    <form id="editForm">
+
+      <h2>Accueil</h2>
+      <label for="heroEyebrow">Sur-titre</label>
+      <input id="heroEyebrow" data-path="hero.eyebrow" type="text" />
+      <label for="heroTitleHtml">Titre principal</label>
+      <textarea id="heroTitleHtml" data-path="hero.titleHtml" rows="2"></textarea>
+      <p class="hint">HTML autorisé : &lt;em&gt; pour le mot souligné, &lt;br /&gt; pour un saut de ligne.</p>
+      <label for="heroLead">Phrase d'accroche</label>
+      <textarea id="heroLead" data-path="hero.lead" rows="2"></textarea>
+      <div class="grid2">
+        <div>
+          <label for="heroCtaPrimary">Bouton principal</label>
+          <input id="heroCtaPrimary" data-path="hero.ctaPrimary" type="text" />
+        </div>
+        <div>
+          <label for="heroCtaPrimaryHref">Lien du bouton principal</label>
+          <input id="heroCtaPrimaryHref" data-path="hero.ctaPrimaryHref" type="text" />
+        </div>
+        <div>
+          <label for="heroCtaSecondary">Bouton secondaire</label>
+          <input id="heroCtaSecondary" data-path="hero.ctaSecondary" type="text" />
+        </div>
+        <div>
+          <label for="heroCtaSecondaryHref">Lien du bouton secondaire</label>
+          <input id="heroCtaSecondaryHref" data-path="hero.ctaSecondaryHref" type="text" />
+        </div>
+      </div>
+
+      <h2>Chiffres clés</h2>
+      <div class="repeater" id="statsList"></div>
+      <button class="add-link" type="button" data-add="stats">+ Ajouter un chiffre</button>
+
+      <h2>Services</h2>
+      <p class="hint" style="margin-top:0.4rem">Les icônes sont conservées telles quelles ; en cas de nouveau service, contactez votre développeur ou laissez l'icône d'origine.</p>
+      <div class="repeater" id="servicesList"></div>
+      <button class="add-link" type="button" data-add="services">+ Ajouter un service</button>
+
+      <h2>Magasins</h2>
+      <div class="repeater" id="shopsList"></div>
+      <button class="add-link" type="button" data-add="shops">+ Ajouter un magasin</button>
+
+      <h2>Section contact</h2>
+      <label for="infosTitle">Titre</label>
+      <input id="infosTitle" data-path="sections.infosTitle" type="text" />
+      <label for="infosLead">Texte</label>
+      <textarea id="infosLead" data-path="sections.infosLead" rows="2"></textarea>
+
+      <h2>Citation</h2>
+      <label for="quoteText">Texte</label>
+      <textarea id="quoteText" data-path="quote.text" rows="2"></textarea>
+      <label for="quoteAuthor">Signature</label>
+      <input id="quoteAuthor" data-path="quote.author" type="text" />
+
+      <h2>Coordonnées</h2>
+      <div class="grid2">
+        <div>
+          <label for="contactPhone">Téléphone (affiché)</label>
+          <input id="contactPhone" data-path="contact.phone" type="text" />
+        </div>
+        <div>
+          <label for="contactPhoneHref">Lien téléphone</label>
+          <input id="contactPhoneHref" data-path="contact.phoneHref" type="text" placeholder="tel:0438864226" />
+        </div>
+        <div>
+          <label for="contactEmail">Email (affiché)</label>
+          <input id="contactEmail" data-path="contact.email" type="text" />
+        </div>
+        <div>
+          <label for="contactEmailHref">Lien email</label>
+          <input id="contactEmailHref" data-path="contact.emailHref" type="text" placeholder="mailto:..." />
+        </div>
+      </div>
+      <label for="contactAddressHtml">Adresse</label>
+      <textarea id="contactAddressHtml" data-path="contact.addressHtml" rows="2"></textarea>
+      <p class="hint">HTML autorisé : &lt;br /&gt; pour un saut de ligne.</p>
+
+      <h2>Bas de page</h2>
+      <label for="footerIntro">Phrase de présentation</label>
+      <textarea id="footerIntro" data-path="footer.intro" rows="2"></textarea>
+      <label>Mentions légales (une par ligne)</label>
+      <textarea id="legalHtml" rows="3"></textarea>
+      <p class="hint">HTML autorisé pour les liens (ex. vers le médiateur CNPM).</p>
+
+      <div class="savebar">
+        <button class="btn btn-primary" type="submit" id="saveBtn">Enregistrer</button>
+        <button class="btn btn-quiet" type="button" id="reloadBtn" style="border-color:rgba(255,255,255,.25); color:#d7e4ea">Recharger</button>
+        <p class="msg" id="saveMsg" role="status"></p>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (s, r) => (r || document).querySelector(s);
+      const gate = $("#gate");
+      const admin = $("#admin");
+
+      /* ─── Connexion ─── */
+      $("#loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = $("#loginBtn");
+        const msg = $("#loginMsg");
+        btn.disabled = true;
+        msg.className = "msg err";
+        msg.textContent = "";
+        try {
+          const res = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: $("#password").value }),
+          });
+          if (res.ok) {
+            const content = await fetch("/admin/api/content", { cache: "no-store" });
+            if (!content.ok) throw new Error();
+            buildEditor(await content.json());
+            gate.classList.add("hidden");
+            admin.classList.remove("hidden");
+          } else {
+            const data = await res.json().catch(() => ({}));
+            msg.textContent = data.error || "Connexion refusée.";
+          }
+        } catch {
+          msg.textContent = "Erreur réseau, réessayez.";
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      $("#logoutBtn").addEventListener("click", async () => {
+        await fetch("/admin/logout", { method: "POST" }).catch(() => {});
+        location.reload();
+      });
+
+      /* ─── Construction de l'éditeur ─── */
+      let content = null;
+
+
+      function escapeAttr(s) {
+        return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+      }
+      function escapeHtml(s) {
+        return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function itemInput(listName, index, key, value, label) {
+        return `<div><label>${label}</label><input type="text" data-item="${listName}.${index}.${key}" value="${escapeAttr(value)}" /></div>`;
+      }
+      function itemTextarea(listName, index, key, value, label, rows) {
+        return `<div><label>${label}</label><textarea rows="${rows || 2}" data-item="${listName}.${index}.${key}">${escapeHtml(value)}</textarea></div>`;
+      }
+
+      function renderStats() {
+        $("#statsList").innerHTML = content.stats.map((s, i) => `
+          <div class="rep-item">
+            <div class="rep-head"><span class="rep-num">${String(i + 1).padStart(2, "0")}</span><span class="rep-title">Chiffre</span><button type="button" class="rep-del" data-del="stats.${i}">Supprimer</button></div>
+            <div class="grid2">
+              ${itemInput("stats", i, "value", s.value, "Valeur (ex : 2, 7+, 40 min…)")}
+              ${itemInput("stats", i, "labelHtml", s.labelHtml, "Libellé (HTML : <br /> autorisé)")}
+            </div>
+          </div>`).join("");
+      }
+
+      function renderServices() {
+        $("#servicesList").innerHTML = content.services.map((s, i) => `
+          <div class="rep-item">
+            <div class="rep-head"><span class="rep-num">${String(i + 1).padStart(2, "0")}</span><span class="rep-title">${escapeHtml(s.title) || "Service"}</span><button type="button" class="rep-del" data-del="services.${i}">Supprimer</button></div>
+            ${itemInput("services", i, "title", s.title, "Titre")}
+            ${itemTextarea("services", i, "text", s.text, "Description")}
+          </div>`).join("");
+      }
+
+      function renderShops() {
+        $("#shopsList").innerHTML = content.shops.map((s, i) => `
+          <div class="rep-item">
+            <div class="rep-head"><span class="rep-num">${s.num || String(i + 1).padStart(2, "0")}</span><span class="rep-title">${escapeHtml(s.name) || "Magasin"}</span><button type="button" class="rep-del" data-del="shops.${i}">Supprimer</button></div>
+            <div class="grid2">
+              ${itemInput("shops", i, "num", s.num, "Numéro affiché")}
+              ${itemInput("shops", i, "name", s.name, "Nom du magasin")}
+              ${itemInput("shops", i, "shortName", s.shortName, "Nom court (pied de page)")}
+              ${itemInput("shops", i, "tag", s.tag, "Étiquette sur la photo")}
+              ${itemInput("shops", i, "addr", s.addr, "Adresse / localisation")}
+              ${itemTextarea("shops", i, "note", s.note, "Note en bas de carte", 2)}
+            </div>
+            <div class="grid2">
+              <div>
+                <label>État d'ouverture</label>
+                <select data-item="shops.${i}.badge.state">
+                  <option value="open" ${s.badge.state === "open" ? "selected" : ""}>Ouvert (vert)</option>
+                  <option value="closed" ${s.badge.state === "closed" ? "selected" : ""}>Fermé (ambre)</option>
+                </select>
+              </div>
+              <div>
+                <label>Message du badge</label>
+                <input type="text" data-item="shops.${i}.badge.text" value="${escapeAttr(s.badge.text)}" />
+              </div>
+            </div>
+            <div class="items-editor">
+              <label>Matériel proposé (une ligne par item)</label>
+              <textarea rows="5" data-item="shops.${i}.itemsText">${escapeHtml((s.items || []).join("\n"))}</textarea>
+            </div>
+            <p class="hint">Apparence photo : <select data-item="shops.${i}.theme" style="display:inline-block; width:auto; padding:0.25rem 0.5rem"><option value="alpine" ${s.theme === "alpine" ? "selected" : ""}>montagne</option><option value="forest" ${s.theme === "forest" ? "selected" : ""}>forêt</option></select> — ordre inversé sur le site : <input type="checkbox" data-item="shops.${i}.flip" ${s.flip ? "checked" : ""} style="display:inline-block; width:auto" /></p>
+          </div>`).join("");
+      }
+
+      function bindSimpleFields() {
+        document.querySelectorAll("input[data-path], textarea[data-path]").forEach((el) => {
+          el.value = getPath(el.dataset.path) ?? "";
+        });
+      }
+
+      function getPath(p) {
+        return p.split(".").reduce((o, k) => (o == null ? undefined : o[k]), content);
+      }
+
+      function setPath(p, v) {
+        const keys = p.split(".");
+        const last = keys.pop();
+        const obj = keys.reduce((o, k) => o[k], content);
+        obj[last] = v;
+      }
+
+      function buildEditor(data) {
+        content = data;
+        bindSimpleFields();
+        renderStats();
+        renderServices();
+        renderShops();
+        $("#legalHtml").value = (content.legalHtml || []).join("\n");
+      }
+
+      function collect() {
+        document.querySelectorAll("input[data-path], textarea[data-path]").forEach((el) => setPath(el.dataset.path, el.value));
+        content.legalHtml = $("#legalHtml").value.split("\n").filter((l) => l.trim());
+
+        document.querySelectorAll("[data-item]").forEach((el) => {
+          const [list, index, ...rest] = el.dataset.item.split(".");
+          const keyPath = rest.join(".");
+          const target = content[list][Number(index)];
+          if (keyPath === "itemsText") {
+            target.items = el.value.split("\n").map((l) => l.trim()).filter(Boolean);
+            return;
+          }
+          const keys = keyPath.split(".");
+          const last = keys.pop();
+          let obj = target;
+          for (const k of keys) {
+            if (typeof obj[k] !== "object" || obj[k] === null) obj[k] = {};
+            obj = obj[k];
+          }
+          obj[last] = el.type === "checkbox" ? el.checked : el.value;
+        });
+        return content;
+      }
+
+      /* Répéteurs */
+      document.querySelectorAll("[data-add]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const which = btn.dataset.add;
+          if (which === "stats") content.stats.push({ value: "", labelHtml: "" });
+          if (which === "services") content.services.push({ iconHtml: content.services[0]?.iconHtml || "", title: "Nouveau service", text: "" });
+          if (which === "shops") content.shops.push({
+            num: String(content.shops.length + 1).padStart(2, "0"),
+            name: "Nouveau magasin", shortName: "", tag: "", theme: "alpine", flip: false,
+            addr: "", badge: { state: "open", text: "Ouvert" }, items: [], note: "",
+            iconHtml: content.shops[0]?.iconHtml || "",
+          });
+          renderStats(); renderServices(); renderShops();
+        });
+      });
+
+      document.addEventListener("click", (e) => {
+        const del = e.target.closest("[data-del]");
+        if (!del) return;
+        const [list, index] = del.dataset.del.split(".");
+        content[list].splice(Number(index), 1);
+        renderStats(); renderServices(); renderShops();
+      });
+
+      /* Enregistrer */
+      $("#editForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = $("#saveMsg");
+        const btn = $("#saveBtn");
+        btn.disabled = true;
+        msg.className = "msg";
+        try {
+          const res = await fetch("/admin/api/content", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(collect()),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            msg.textContent = "✓ Enregistré — le site est à jour.";
+            msg.className = "msg ok";
+          } else {
+            msg.textContent = data.error || "Erreur lors de l'enregistrement.";
+            msg.className = "msg err";
+          }
+        } catch {
+          msg.textContent = "Erreur réseau.";
+          msg.className = "msg err";
+        } finally {
+          btn.disabled = false;
+          setTimeout(() => { if (msg.className === "msg ok") { msg.className = "msg"; msg.textContent = ""; } }, 4000);
+        }
+      });
+
+      $("#reloadBtn").addEventListener("click", async () => {
+        const res = await fetch("/admin/api/content", { cache: "no-store" });
+        if (res.ok) buildEditor(await res.json());
+      });
+    })();
+  </script>
+</body>
+</html>
